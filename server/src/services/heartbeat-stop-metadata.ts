@@ -56,14 +56,19 @@ export function resolveHeartbeatRunTimeoutPolicy(
   const config = adapterConfig ?? {};
 
   if (adapterType === "http") {
+    // Mirror the precedence in adapters/http/execute.ts: `timeoutMs` wins, and
+    // the documented `timeoutSec` supplies the value when it is absent.
     const hasTimeoutMs = hasOwn(config, "timeoutMs");
-    const rawTimeoutMs = hasTimeoutMs ? readFiniteNumber(config.timeoutMs) : 0;
+    const hasTimeoutSec = hasOwn(config, "timeoutSec");
+    const rawTimeoutMs = hasTimeoutMs
+      ? readFiniteNumber(config.timeoutMs)
+      : (readFiniteNumber(config.timeoutSec) ?? 0) * 1000;
     const timeoutMs = Math.max(0, Math.floor(rawTimeoutMs ?? 0));
     return {
       effectiveTimeoutSec: timeoutMs / 1000,
       effectiveTimeoutMs: timeoutMs,
       timeoutConfigured: timeoutMs > 0,
-      timeoutSource: hasTimeoutMs ? "config" : "default",
+      timeoutSource: hasTimeoutMs || hasTimeoutSec ? "config" : "default",
     };
   }
 

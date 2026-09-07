@@ -42,6 +42,33 @@ describe("heartbeat stop metadata", () => {
     });
   });
 
+  it("resolves the http timeout policy from the documented timeoutSec field", () => {
+    expect(resolveHeartbeatRunTimeoutPolicy("http", { timeoutSec: 2 })).toEqual({
+      effectiveTimeoutSec: 2,
+      effectiveTimeoutMs: 2000,
+      timeoutConfigured: true,
+      timeoutSource: "config",
+    });
+  });
+
+  it("prefers timeoutMs over timeoutSec for the http adapter", () => {
+    expect(resolveHeartbeatRunTimeoutPolicy("http", { timeoutMs: 1000, timeoutSec: 9 })).toEqual({
+      effectiveTimeoutSec: 1,
+      effectiveTimeoutMs: 1000,
+      timeoutConfigured: true,
+      timeoutSource: "config",
+    });
+  });
+
+  it("keeps the http adapter at no timeout when neither field is set", () => {
+    expect(resolveHeartbeatRunTimeoutPolicy("http", {})).toEqual({
+      effectiveTimeoutSec: 0,
+      effectiveTimeoutMs: 0,
+      timeoutConfigured: false,
+      timeoutSource: "default",
+    });
+  });
+
   it("distinguishes budget cancellation from manual cancellation", () => {
     expect(
       buildHeartbeatRunStopMetadata({
