@@ -1,6 +1,7 @@
 import type { AdapterExecutionContext, AdapterExecutionResult } from "../types.js";
-import { asString, asNumber, parseObject } from "../utils.js";
+import { asString, parseObject } from "../utils.js";
 import { guardedHttpAdapterFetch } from "./remote-fetch.js";
+import { resolveHttpTimeoutMs } from "./timeout.js";
 
 export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExecutionResult> {
   const { config, runId, agent, context } = ctx;
@@ -8,10 +9,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   if (!url) throw new Error("HTTP adapter missing url");
 
   const method = asString(config.method, "POST");
-  // `timeoutSec` is the field this adapter documents in agentConfigurationDoc.
-  // `timeoutMs` stays supported as an undocumented alias so existing configs
-  // keep working.
-  const timeoutMs = asNumber(config.timeoutMs, asNumber(config.timeoutSec, 0) * 1000);
+  const timeoutMs = resolveHttpTimeoutMs(config);
   const headers = parseObject(config.headers) as Record<string, string>;
   const payloadTemplate = parseObject(config.payloadTemplate);
   const body = {

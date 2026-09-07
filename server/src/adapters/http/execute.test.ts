@@ -23,7 +23,7 @@ function mockNeverResolvingFetch(): void {
   );
 }
 
-function buildTimeoutContext(timeoutConfig: Record<string, number>): Parameters<typeof execute>[0] {
+function buildTimeoutContext(timeoutConfig: Record<string, unknown>): Parameters<typeof execute>[0] {
   return {
     runId: "run-1",
     agent: {
@@ -126,6 +126,18 @@ describe("http adapter execute", () => {
 
     expect(result.timedOut).toBe(true);
     expect(result.errorCode).toBe("timeout");
+    expect(result.errorMessage).toContain("timed out after 2000ms");
+  });
+
+  it("falls through to timeoutSec when timeoutMs carries no number", async () => {
+    vi.useFakeTimers();
+    mockNeverResolvingFetch();
+
+    const pending = execute(buildTimeoutContext({ timeoutMs: null, timeoutSec: 2 }));
+    await vi.advanceTimersByTimeAsync(2000);
+    const result = await pending;
+
+    expect(result.timedOut).toBe(true);
     expect(result.errorMessage).toContain("timed out after 2000ms");
   });
 
