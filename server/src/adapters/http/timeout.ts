@@ -17,5 +17,7 @@ export const MAX_HTTP_TIMEOUT_MS = 2_147_483_647;
 export function resolveHttpTimeoutMs(config: Record<string, unknown>): number {
   const timeoutMs = asNumber(config.timeoutMs, asNumber(config.timeoutSec, 0) * 1000);
   if (!(timeoutMs > 0)) return 0;
-  return Math.min(Math.floor(timeoutMs), MAX_HTTP_TIMEOUT_MS);
+  // Anything past this line is positive, so hold it at 1ms rather than let
+  // flooring turn a sub-millisecond timeout into the no-timeout sentinel.
+  return Math.min(Math.max(1, Math.floor(timeoutMs)), MAX_HTTP_TIMEOUT_MS);
 }

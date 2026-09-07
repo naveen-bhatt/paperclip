@@ -36,4 +36,11 @@ describe("resolveHttpTimeoutMs", () => {
   it("floors a fractional millisecond value", () => {
     expect(resolveHttpTimeoutMs({ timeoutSec: 0.0015 })).toBe(1);
   });
+
+  it("holds a positive sub-millisecond timeout at 1ms", () => {
+    // Flooring must not turn a configured timeout into the no-timeout
+    // sentinel, which would leave a stalled request unbounded.
+    expect(resolveHttpTimeoutMs({ timeoutSec: 0.0005 })).toBe(1);
+    expect(resolveHttpTimeoutMs({ timeoutMs: 0.4 })).toBe(1);
+  });
 });
